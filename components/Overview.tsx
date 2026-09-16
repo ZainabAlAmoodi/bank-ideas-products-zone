@@ -1,11 +1,12 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { fmtBHD, fmtNum, fmtPct, sum, type Product } from "@/lib/data";
+import { fmtBHD, fmtNum, fmtPct, sum, MONTHS, type Product } from "@/lib/data";
 import { BarList } from "@/components/BarList";
 import { DeltaChip } from "@/components/DeltaChip";
 import { DestCard } from "@/components/DestCard";
 import { ProductCard } from "@/components/ProductCard";
+import { TrendChart } from "@/components/TrendChart";
 
 export function Overview({
   products,
@@ -24,6 +25,10 @@ export function Overview({
   const totalBalance = sum(products.map((p) => p.balance));
   const blendedGrowth = sum(products.map((p) => p.growth * p.balance)) / totalBalance;
   const ranked = [...products].sort((a, b) => b.balance - a.balance);
+
+  const monthCount = Math.max(...products.map((p) => p.trend.length), MONTHS.length);
+  const months = MONTHS.slice(-monthCount);
+  const portfolioTrend = Array.from({ length: monthCount }, (_, i) => sum(products.map((p) => p.trend[i] ?? 0)));
 
   return (
     <section className="view is-visible">
@@ -47,6 +52,35 @@ export function Overview({
           <div className="eyebrow">Products tracked</div>
           <div className="kpi-value tabular">{products.length}</div>
           <div className="kpi-sub">Accounts only</div>
+        </div>
+      </div>
+
+      <div className="section">
+        <div className="section-head">
+          <h2 className="section-title">Total balance trend</h2>
+          <span className="section-note">Sum of every product&apos;s balance, last {monthCount} months</span>
+        </div>
+        <div className="card trend-wrap">
+          <TrendChart values={portfolioTrend} months={months} showTip={showTip} hideTip={hideTip} />
+        </div>
+      </div>
+
+      <div className="section">
+        <div className="section-head">
+          <h2 className="section-title">Balance trend by product</h2>
+          <span className="section-note">Same {monthCount}-month window, side by side. Click a card to open that product.</span>
+        </div>
+        <div className="trend-grid">
+          {products.map((p) => (
+            <button key={p.id} className="trend-mini" onClick={() => onOpenProduct(p.id)}>
+              <div className="trend-mini-head">
+                <span className="name">{p.name}</span>
+                <DeltaChip pct={p.growth} />
+              </div>
+              <div className="trend-mini-value tabular">{fmtBHD(p.balance)}</div>
+              <TrendChart values={p.trend} months={MONTHS} showTip={showTip} hideTip={hideTip} compact />
+            </button>
+          ))}
         </div>
       </div>
 
