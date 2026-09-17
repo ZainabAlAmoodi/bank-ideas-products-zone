@@ -1,4 +1,5 @@
 import { fmtBHD, fmtPct, type Product } from "@/lib/data";
+import { computeTrigger } from "@/lib/triggers";
 import { BisbMark } from "@/components/BisbMark";
 
 export function Sidebar({
@@ -48,7 +49,9 @@ export function Sidebar({
             >
               <span className="nav-mono">{p.mono}</span>
               <span className="nav-text">
-                <span className="nav-name">{p.name}</span>
+                <span className="nav-name">
+                  {p.name} {computeTrigger(p.id)?.flagged && <span className="flag-dot" title="Needs attention" />}
+                </span>
                 <span className="nav-meta">
                   <span>{fmtBHD(p.balance)}</span>
                   <span className={`nav-growth ${p.growth >= 0 ? "pos" : "neg"}`}>{fmtPct(p.growth)}</span>

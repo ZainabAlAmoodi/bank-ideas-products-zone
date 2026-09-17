@@ -1,14 +1,32 @@
 "use client";
 
-import { useEffect } from "react";
-import { computeDestination, destShares, fmtBHD, DEST_META, type Product } from "@/lib/data";
+import { useEffect, type MouseEvent } from "react";
+import { computeDestination, destShares, fmtBHD, productName, DEST_META, type Product } from "@/lib/data";
+import { getInternalTransfersFrom } from "@/lib/internalTransfers";
+import { BarList } from "@/components/BarList";
 
 export interface DestTarget {
   products: Product[];
   label: string;
 }
 
-export function DestModal({ target, onClose }: { target: DestTarget | null; onClose: () => void }) {
+function aggregateChannels(products: Product[], direction: "inflow" | "outflow") {
+  const map = new Map<string, number>();
+  products.forEach((p) => p.channels[direction].forEach((c) => map.set(c.name, (map.get(c.name) ?? 0) + c.value)));
+  return [...map.entries()].map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
+}
+
+export function DestModal({
+  target,
+  showTip,
+  hideTip,
+  onClose,
+}: {
+  target: DestTarget | null;
+  showTip: (e: MouseEvent, label: string, value: string) => void;
+  hideTip: () => void;
+  onClose: () => void;
+}) {
   useEffect(() => {
     if (!target) return;
     const onKey = (e: KeyboardEvent) => {
@@ -22,6 +40,10 @@ export function DestModal({ target, onClose }: { target: DestTarget | null; onCl
   const { products, label } = target;
   const { totals, total, byChannel } = computeDestination(products);
   const shares = destShares(totals, total);
+  const internalTransfers = getInternalTransfersFrom(products.map((p) => p.id));
+
+  const topInflow = aggregateChannels(products, "inflow").slice(0, 3);
+  const topOutflowOpportunity = aggregateChannels(products, "outflow").slice(0, 3);
 
   return (
     <div
@@ -65,6 +87,29 @@ export function DestModal({ target, onClose }: { target: DestTarget | null; onCl
           ))}
         </div>
 
+        {internalTransfers.length > 0 && (
+          <div style={{ overflowX: "auto" }}>
+            <table className="modal-table">
+              <thead>
+                <tr>
+                  <th>Stayed within BisB &mdash; from</th>
+                  <th>To</th>
+                  <th className="num">Avg. monthly volume</th>
+                </tr>
+              </thead>
+              <tbody>
+                {internalTransfers.map((f) => (
+                  <tr key={`${f.fromProductId}-${f.toProductId}`}>
+                    <td>{productName(f.fromProductId)}</td>
+                    <td>{productName(f.toProductId)}</td>
+                    <td className="num tabular">{fmtBHD(f.volume)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         <div style={{ overflowX: "auto" }}>
           <table className="modal-table">
             <thead>
@@ -91,6 +136,48 @@ export function DestModal({ target, onClose }: { target: DestTarget | null; onCl
               ))}
             </tbody>
           </table>
+        </div>
+
+        <div className="grid-2 equal">
+          <div>
+            <div className="popover-subtitle">Top performing channels &middot; inflows</div>
+            <BarList
+              items={topInflow.map((c, i) => ({
+                label: c.name,
+                value: c.value,
+                valueLabel: fmtBHD(c.value),
+                color: "var(--flow-in)",
+                badge:
+                  i === 0 ? (
+                    <span className="badge good">
+                      <span className="dot" />
+                      Top
+                    </span>
+                  ) : undefined,
+              }))}
+              showTip={showTip}
+              hideTip={hideTip}
+            />
+          </div>
+          <div>
+            <div className="popover-subtitle">Channels with opportunity &middot; highest outflows</div>
+            <BarList
+              items={topOutflowOpportunity.map((c) => ({
+                label: c.name,
+                value: c.value,
+                valueLabel: fmtBHD(c.value),
+                color: "var(--flow-out)",
+                badge: (
+                  <span className="badge opportunity">
+                    <span className="dot" />
+                    Opportunity
+                  </span>
+                ),
+              }))}
+              showTip={showTip}
+              hideTip={hideTip}
+            />
+          </div>
         </div>
       </div>
     </div>

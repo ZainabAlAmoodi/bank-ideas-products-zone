@@ -8,6 +8,10 @@ export interface BarItem {
   valueLabel: string;
   color: string;
   badge?: ReactNode;
+  /** Show this logo before the label (label is kept as the logo's alt text / tooltip). */
+  logoSrc?: string;
+  /** When set alongside logoSrc, shown as text next to the logo instead of `label`. */
+  productName?: string;
 }
 
 export function BarList({
@@ -35,7 +39,15 @@ export function BarList({
             onClick={onItemClick ? () => onItemClick(idx) : undefined}
           >
             <div className="bar-row-label">
-              <span className="txt">{it.label}</span>
+              {it.logoSrc ? (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={it.logoSrc} alt={it.label} className="bar-row-logo" />
+                  {it.productName && <span className="txt">{it.productName}</span>}
+                </>
+              ) : (
+                <span className="txt">{it.label}</span>
+              )}
               {it.badge}
             </div>
             <div

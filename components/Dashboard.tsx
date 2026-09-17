@@ -8,11 +8,13 @@ import { Sidebar } from "@/components/Sidebar";
 import { Overview } from "@/components/Overview";
 import { ProductDetail } from "@/components/ProductDetail";
 import { DestModal, type DestTarget } from "@/components/DestModal";
+import { DeepDiveModal } from "@/components/DeepDiveModal";
 import { Tooltip } from "@/components/Tooltip";
 
 export function Dashboard({ products, dataSource }: { products: Product[]; dataSource: ProductsSource }) {
   const [view, setView] = useState<string>("overview");
   const [destTarget, setDestTarget] = useState<DestTarget | null>(null);
+  const [deepDiveProductId, setDeepDiveProductId] = useState<string | null>(null);
   const { tip, showTip, hideTip } = useTooltip();
 
   const activeProduct: Product | null = view === "overview" ? null : products.find((p) => p.id === view) ?? null;
@@ -43,6 +45,7 @@ export function Dashboard({ products, dataSource }: { products: Product[]; dataS
             hideTip={hideTip}
             onBack={() => setView("overview")}
             onOpenDest={() => setDestTarget({ products: [activeProduct], label: activeProduct.name })}
+            onOpenDeepDive={setDeepDiveProductId}
           />
         ) : (
           <Overview
@@ -51,11 +54,19 @@ export function Dashboard({ products, dataSource }: { products: Product[]; dataS
             hideTip={hideTip}
             onOpenProduct={setView}
             onOpenDest={() => setDestTarget({ products, label: "All products" })}
+            onOpenDeepDive={setDeepDiveProductId}
           />
         )}
       </main>
 
-      <DestModal target={destTarget} onClose={() => setDestTarget(null)} />
+      <DestModal target={destTarget} showTip={showTip} hideTip={hideTip} onClose={() => setDestTarget(null)} />
+      <DeepDiveModal
+        products={products}
+        productId={deepDiveProductId}
+        showTip={showTip}
+        hideTip={hideTip}
+        onClose={() => setDeepDiveProductId(null)}
+      />
       <Tooltip tip={tip} />
     </div>
   );

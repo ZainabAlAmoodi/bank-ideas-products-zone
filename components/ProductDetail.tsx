@@ -1,12 +1,16 @@
 "use client";
 
 import type { MouseEvent } from "react";
-import { fmtBHD, fmtNum, fmtPct, sum, segMeta, MONTHS, type Product, type SegmentKey } from "@/lib/data";
+import { fmtBHD, fmtNum, fmtPct, sum, rankedSegments, MONTHS, type Product } from "@/lib/data";
+import { computeTrigger } from "@/lib/triggers";
+import { PRODUCT_COMPETITOR_INTEL } from "@/lib/competitors";
 import { BarList } from "@/components/BarList";
 import { DeltaChip } from "@/components/DeltaChip";
 import { TrendChart } from "@/components/TrendChart";
 import { FlowChart } from "@/components/FlowChart";
 import { DestCard } from "@/components/DestCard";
+import { CompetitorStanding } from "@/components/CompetitorStanding";
+import { ActionPlanForecast } from "@/components/ActionPlanForecast";
 
 export function ProductDetail({
   product,
@@ -14,20 +18,22 @@ export function ProductDetail({
   hideTip,
   onBack,
   onOpenDest,
+  onOpenDeepDive,
 }: {
   product: Product;
   showTip: (e: MouseEvent, label: string, value: string) => void;
   hideTip: () => void;
   onBack: () => void;
   onOpenDest: () => void;
+  onOpenDeepDive: (productId: string) => void;
 }) {
   const avgBalance = (product.balance * 1_000_000) / product.customers;
 
-  const segEntries = (Object.keys(product.segments) as SegmentKey[])
-    .map((key) => ({ key, meta: segMeta(key), value: product.segments[key] }))
-    .sort((a, b) => b.value - a.value);
+  const segEntries = rankedSegments(product);
   const best = segEntries.slice(0, 2);
   const opportunity = [...segEntries].slice(-2).reverse();
+
+  const trigger = computeTrigger(product.id);
 
   const inRanked = [...product.channels.inflow].sort((a, b) => b.value - a.value);
   const outRanked = [...product.channels.outflow].sort((a, b) => b.value - a.value);
@@ -41,6 +47,17 @@ export function ProductDetail({
       <button className="back-link" onClick={onBack}>
         &larr; Portfolio Overview
       </button>
+
+      {trigger?.flagged && (
+        <div className="attention-banner">
+          <span className="msg">
+            <span className="flag-dot" />
+            Down {fmtPct(trigger.currentYoY)} vs. the same quarter last year, after growing {fmtPct(trigger.priorYoY)}
+            the year before — this needs attention.
+          </span>
+          <button onClick={() => onOpenDeepDive(product.id)}>View deep dive</button>
+        </div>
+      )}
 
       <div className="card">
         <div className="product-card-top" style={{ marginBottom: 10 }}>
@@ -230,11 +247,35 @@ export function ProductDetail({
 
       <div className="section">
         <div className="section-head">
-          <h2 className="section-title">Where outflow money goes</h2>
-          <span className="section-note">Internal transfers vs. cash withdrawals vs. digital withdrawals</span>
+          <h2 className="section-title">Funds tracker</h2>
+          <span className="section-note">Inflows and outflows for {product.name}, and where every outflow BHD ends up</span>
         </div>
         <DestCard products={[product]} label={product.name} onOpen={onOpenDest} />
       </div>
+
+      {(() => {
+        const intel = PRODUCT_COMPETITOR_INTEL[product.id];
+        if (!intel) return null;
+        return (
+          <>
+            <div className="section">
+              <div className="section-head">
+                <h2 className="section-title">Where BisB stands vs. competitors</h2>
+                <span className="section-note">Figures below are specific to {product.name} only</span>
+              </div>
+              <CompetitorStanding intel={intel} showTip={showTip} hideTip={hideTip} />
+            </div>
+
+            <div className="section">
+              <div className="section-head">
+                <h2 className="section-title">Action plan</h2>
+                <span className="section-note">Check the actions you&apos;d run for {product.name} — the panel recomputes the forecast live</span>
+              </div>
+              <ActionPlanForecast product={product} trigger={trigger} actionPlan={intel.actionPlan} />
+            </div>
+          </>
+        );
+      })()}
     </section>
   );
 }

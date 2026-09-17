@@ -12,6 +12,8 @@ export function TrendChart({
   hideTip,
   compact = false,
   height,
+  valueLabel = "balance",
+  formatValue = fmtBHD,
 }: {
   values: number[];
   months: string[];
@@ -21,6 +23,10 @@ export function TrendChart({
   compact?: boolean;
   /** Override the plot height (viewBox units) without dropping gridlines/labels. */
   height?: number;
+  /** Noun used in the point tooltip, e.g. "customers" or "growth" — defaults to "balance". */
+  valueLabel?: string;
+  /** How to format a value in the tooltip and axis — defaults to BHD millions. */
+  formatValue?: (v: number) => string;
 }) {
   const gradientId = `areaGrad-${useId()}`;
 
@@ -71,7 +77,7 @@ export function TrendChart({
             cy={y(v)}
             r={compact ? 7 : 9}
             fill="transparent"
-            onMouseMove={(e) => showTip(e, `${months[i]} balance`, fmtBHD(v))}
+            onMouseMove={(e) => showTip(e, `${months[i]} ${valueLabel}`, formatValue(v))}
             onMouseLeave={hideTip}
           />
           <circle

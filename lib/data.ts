@@ -30,6 +30,20 @@ export const SEGMENTS: SegmentMeta[] = [
 export const segMeta = (key: SegmentKey): SegmentMeta =>
   SEGMENTS.find((s) => s.key === key)!;
 
+export interface RankedSegment {
+  key: SegmentKey;
+  meta: SegmentMeta;
+  value: number;
+}
+
+// A product's segments, ranked descending by share — the shared basis for
+// every "best performing" / "opportunity" callout across the dashboard.
+export function rankedSegments(product: Pick<Product, "segments">): RankedSegment[] {
+  return (Object.keys(product.segments) as SegmentKey[])
+    .map((key) => ({ key, meta: segMeta(key), value: product.segments[key] }))
+    .sort((a, b) => b.value - a.value);
+}
+
 export const MONTHS = ["Apr", "May", "Jun", "Jul", "Aug", "Sep"];
 
 export interface ChannelEntry {
@@ -266,6 +280,11 @@ export const fmtBHD = (m: number): string =>
 export const fmtNum = (n: number): string => n.toLocaleString("en-US");
 export const fmtPct = (p: number): string => `${p > 0 ? "+" : ""}${p.toFixed(1)}%`;
 export const sum = (arr: number[]): number => arr.reduce((a, b) => a + b, 0);
+
+// Reference lookup only (id -> display name) — safe to use even when the
+// dashboard is running on live Supabase data, since product slugs/names are
+// structural, not figures that would drift between the two data sources.
+export const productName = (id: string): string => PRODUCTS.find((p) => p.id === id)?.name ?? id;
 
 /* ---------------- outflow destination ---------------- */
 export type DestBucket = "internal" | "cash" | "outside";
