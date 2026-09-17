@@ -61,7 +61,7 @@ export function Overview({
           <span className="section-note">Sum of every product&apos;s balance, last {monthCount} months</span>
         </div>
         <div className="card trend-wrap">
-          <TrendChart values={portfolioTrend} months={months} showTip={showTip} hideTip={hideTip} />
+          <TrendChart values={portfolioTrend} months={months} showTip={showTip} hideTip={hideTip} height={140} />
         </div>
       </div>
 

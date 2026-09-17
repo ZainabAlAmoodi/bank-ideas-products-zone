@@ -11,6 +11,7 @@ export function TrendChart({
   showTip,
   hideTip,
   compact = false,
+  height,
 }: {
   values: number[];
   months: string[];
@@ -18,10 +19,12 @@ export function TrendChart({
   hideTip: () => void;
   /** Smaller, chrome-free rendering for small-multiples / at-a-glance use. */
   compact?: boolean;
+  /** Override the plot height (viewBox units) without dropping gridlines/labels. */
+  height?: number;
 }) {
   const gradientId = `areaGrad-${useId()}`;
 
-  const H = compact ? 88 : 220;
+  const H = height ?? (compact ? 88 : 220);
   const padL = compact ? 6 : 44;
   const padR = compact ? 6 : 14;
   const padT = compact ? 10 : 16;

@@ -1,4 +1,5 @@
 import { fmtBHD, fmtPct, type Product } from "@/lib/data";
+import { BisbMark } from "@/components/BisbMark";
 
 export function Sidebar({
   products,
@@ -12,7 +13,9 @@ export function Sidebar({
   return (
     <nav className="sidebar" aria-label="Products">
       <div className="brand">
-        <div className="brand-mark">BB</div>
+        <div className="brand-mark">
+          <BisbMark size={22} />
+        </div>
         <div>
           <div className="brand-word">BisB Studio</div>
           <div className="brand-sub">Account Product Performance</div>
